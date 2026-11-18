@@ -1,12 +1,29 @@
-# refusal-direction
+<img alt="refusal-direction" src="assets/banner.png">
 
 This is a small replication of **Arditi et al. 2024, "Refusal in Language Models Is Mediated by a Single Direction"** ([arXiv 2406.11717](https://arxiv.org/abs/2406.11717)). It runs on a CPU, using Qwen2.5-0.5B-Instruct.
 
 It asks one question: does removing a single direction from the model's residual stream switch off refusals, while removing a random direction does nothing?
 
-![scoreboard](img1-scoreboard-grid.png)
+![Refusal rates with the direction removed, a random direction removed, and unmodified](assets/refusal-rates.png)
 
-## What it tests
+## ░ At a glance
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│ model        Qwen2.5-0.5B-Instruct (bf16, CPU, greedy)                 │
+│ method       difference-of-means direction (layer 17, 2 tokens from    │
+│              the end), projected out at run time with forward hooks    │
+│ main result  harmful refusals 144/182 (79%) -> 16/182 (9%) with the    │
+│              direction removed                                         │
+│ controls     the unmodified model and 3 random directions removed the  │
+│              same way: 438/546 (80%)                                   │
+│ judge        keyword rule on the first sentence; harmful completions   │
+│              are never stored                                          │
+│ hardware     8 CPU cores, about 35 min end to end                      │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+## ░ What it tests
 1. **Direction.** Take the mean activation on 128 harmful instructions (AdvBench) and subtract the mean on 128 harmless ones (Alpaca). Do this at every layer and at each of the 5 post-instruction token positions.
 2. **Selection.** Use a separate validation set of 32 harmful and 32 harmless prompts. Pick the candidate whose ablation most lowers the first-token refusal score, with KL < 0.1 on the harmless prompts and the layer below 0.8 × depth.
 3. **Ablation.** Project the direction out of the embedding output and every attention and MLP output. This runs through forward hooks at run time, so no modified weights are ever written.
@@ -18,7 +35,7 @@ It asks one question: does removing a single direction from the model's residual
 5. **Controls.** The unmodified model, plus 3 random unit directions ablated in exactly the same way.
 6. **Judge.** A keyword rule applied to the first sentence of each reply (eval2.py). **Harmful-prompt completions are never stored.** Only refused, complied or incoherent labels are kept.
 
-## Results (run 2026-11-18)
+## ░ Results (run 2026-11-18)
 
 | condition | harmful refused | JBB (82) | AdvBench held-out (100) | Alpaca refused (100) | sensitive-but-harmless refused (100) |
 |---|---|---|---|---|---|
@@ -33,31 +50,31 @@ Two-sided Fisher exact tests:
 
 The selected direction was at layer 17, 2 tokens from the end. Its KL on harmless validation prompts was 0.062.
 
-![per-layer separation](img2-layer-separation.png)
-![terminal](term1-scoreboard.png)
+![Separation between harmful and harmless prompts at each layer](assets/layer-separation.png)
+![Terminal readout of show.py](assets/show.png)
 
 Full details, including the looser v1 judge and why it was replaced, are in [results.md](results.md). The numbers behind them are in [scoreboard.json](scoreboard.json) and `runs/`.
 
-## Setup and rerun
+## ░ Setup and rerun
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt   # CPU torch: add --index-url https://download.pytorch.org/whl/cpu
 python data/fetch_data.py         # AdvBench, Alpaca, JailbreakBench prompt lists
 THREADS=8 python direction.py     # direction, selection, v1 eval  (~20 min on 8 CPU cores)
 THREADS=8 python eval2.py         # held-out eval with the strict judge (~15 min)
-python score.py && python render.py && python show.py
+python score.py && python make_figures.py && python show.py
 ```
 - The model comes from the Hugging Face hub by default. Set `MODEL_PATH` to use a local copy.
 - `direction.py` writes `runs/refusal_direction.pt`. That's a single 896-dim vector, and **it is deliberately not included in this repo**.
 
-## Caveats
+## ░ Caveats
 - One small model, greedy decoding and 64-token replies.
 - The keyword judge measures refused vs not refused. It does not measure how harmful a reply is, and that was not scored, by design.
 - The paper's "adding the direction induces refusal" selection filter was skipped.
 - JBB/AdvBench overlap was removed by source label, not by fuzzy matching.
 - Generation is bf16 on CPU. Counts can shift by a few prompts with a different thread count.
 
-## Data and licences
+## ░ Data and licences
 - **Code:** MIT (see LICENSE).
 - **Prompt sets** are downloaded at run time from their sources:
   - AdvBench (llm-attacks, MIT)

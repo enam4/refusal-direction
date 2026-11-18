@@ -49,7 +49,7 @@ Two-sided Fisher exact tests:
 - The loose list over-counts refusals. It flags "As an AI language model, ... but I can" disclaimers, and words like "harmful" or "illegal" inside helpful answers. We saw this on the stored harmless outputs, then wrote the stricter first-sentence judge (eval2.py) and re-ran the held-out eval with the same saved direction. Both judges give the same conclusion.
 - We audited every strict-judge "refused" on the harmless and sensitive sets by reading it. All were genuine refusals or near-refusals.
 
-**Per-layer separation** (img2):
+**Per-layer separation** (assets/layer-separation.png):
 - Measured as Cohen's d between harmful and harmless validation prompts, projected on each layer's direction.
 - Separation is about 2–4 up to layer 14, jumps to about 5.8 at layer 15, and stays at about 5–6.4 after that.
 - The directions with the strongest ablation effect (layers 14–18) cluster where the jump happens. Several of them failed the KL < 0.1 filter (KL 0.5–3.2) because they also disrupted harmless prompts.
@@ -73,7 +73,7 @@ Replicated at 0.5B scale.
   - selection.json, layer_separation.json, split_sizes.json.
   - refusal_direction.pt: written by direction.py; deliberately not included in this repo.
 - **Logs:** logs/run.log and logs/eval2.log.
-- **Images:** img1-scoreboard-grid.png, img2-layer-separation.png, term1-scoreboard.png (rendered from real show.py output).
+- **Images:** assets/banner.png, assets/refusal-rates.png, assets/layer-separation.png, assets/show.png (the real show.py output, rendered by make_figures.py).
 - **Post draft:** post-draft.txt.
-- **Scripts:** direction.py, eval2.py, score.py, show.py, render.py, plus lib/ (style.py, term.py).
+- **Scripts:** direction.py, eval2.py, score.py, show.py, make_figures.py, figstyle.py.
 - **Data sources:** data/ (AdvBench CSV from the llm-attacks repo, Alpaca from HF tatsu-lab/alpaca, JailbreakBench JBB-Behaviors).
