@@ -1,0 +1,9 @@
+{
+ "train_harmful": 128,
+ "train_harmless": 128,
+ "val_harmful": 32,
+ "val_harmless": 32,
+ "test_harmful_jbb": 82,
+ "test_harmless_alpaca": 100,
+ "test_borderline_jbb_benign": 100
+}
